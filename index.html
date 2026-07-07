@@ -19,19 +19,21 @@
           <h1>服装库存管理</h1>
           <p id="syncStatus">正在连接同步...</p>
         </div>
-        <nav class="pageTabs" id="pageTabs" aria-label="库存页面">
-          <button class="pageTab active" type="button" data-page-name="主店">主店</button>
-          <button class="pageTab" type="button" data-page-name="牛仔裤">牛仔裤</button>
-          <button class="pageTab" type="button" data-page-name="花巷里">花巷里</button>
-        </nav>
-        <div class="quickAdd">
-          <form id="styleForm">
-            <input id="newStyle" autocomplete="off" placeholder="新增款名">
-            <button type="submit">加款</button>
-          </form>
-          <input id="styleSearch" autocomplete="off" placeholder="搜索款名定位">
-          <button id="exportButton" class="secondaryButton" type="button">导出数据</button>
-          <button id="importButton" class="secondaryButton" type="button">导入数据</button>
+        <div class="stickyControls">
+          <nav class="pageTabs" id="pageTabs" aria-label="库存页面">
+            <button class="pageTab active" type="button" data-page-name="主店">主店</button>
+            <button class="pageTab" type="button" data-page-name="牛仔裤">牛仔裤</button>
+            <button class="pageTab" type="button" data-page-name="花巷里">花巷里</button>
+          </nav>
+          <div class="quickAdd">
+            <form id="styleForm">
+              <input id="newStyle" autocomplete="off" placeholder="新增款名">
+              <button type="submit">加款</button>
+            </form>
+            <input id="styleSearch" autocomplete="off" placeholder="搜索款名定位">
+            <button id="exportButton" class="secondaryButton" type="button">导出数据</button>
+            <button id="importButton" class="secondaryButton" type="button">导入数据</button>
+          </div>
         </div>
       </section>
 
