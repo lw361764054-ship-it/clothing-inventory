@@ -151,12 +151,17 @@ button:hover {
   display: flex;
   gap: 8px;
   order: 1;
+  width: 100%;
   margin-bottom: 14px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: #eef7f9;
 }
 
 .pageTab {
+  flex: 1 0 88px;
   min-width: 88px;
   font-size: 18px;
   border: 1px solid var(--line-strong);
@@ -399,11 +404,10 @@ button:hover {
   }
 
   .pageTabs {
-    order: 0;
+    order: 1;
     gap: 6px;
-    margin-bottom: 4px;
-    padding-left: 10px;
-    padding-right: 10px;
+    margin-bottom: 6px;
+    padding: 7px;
   }
 
   .pageTab {

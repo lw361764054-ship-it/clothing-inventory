@@ -638,7 +638,11 @@ els.sheets.addEventListener("keydown", event => {
 els.pageTabs.addEventListener("click", event => {
   const button = event.target.closest(".pageTab");
   if (!button) return;
-  state.activePageId = button.dataset.pageId;
+  const targetPage = button.dataset.pageId
+    ? state.pages.find(page => page.id === button.dataset.pageId)
+    : state.pages.find(page => page.name === button.dataset.pageName);
+  if (!targetPage) return;
+  state.activePageId = targetPage.id;
   localStorage.setItem("activePageId", state.activePageId);
   renderTabs();
   renderSheets();
