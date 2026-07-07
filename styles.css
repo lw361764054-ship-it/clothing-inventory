@@ -9,7 +9,7 @@
   --line-strong: #c8d0d9;
   --active: #126e82;
   --active-soft: rgba(18, 110, 130, 0.12);
-  --sticky-table-top: 126px;
+  --fixed-controls-height: 126px;
 }
 
 * {
@@ -35,7 +35,7 @@ input {
 .shell {
   width: min(100% - 24px, 1280px);
   margin: 0 auto;
-  padding: 18px 0 28px;
+  padding: calc(var(--fixed-controls-height) + 18px) 0 28px;
 }
 
 .topbar {
@@ -47,11 +47,14 @@ input {
 }
 
 .stickyControls {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 30;
   display: grid;
   gap: 10px;
+  width: min(100% - 24px, 1280px);
   padding: 8px 0 10px;
   background: var(--bg);
   box-shadow: 0 8px 14px rgba(34, 40, 49, 0.08);
@@ -262,8 +265,6 @@ button:hover {
 }
 
 .inventorySheet thead th {
-  position: sticky;
-  top: var(--sticky-table-top);
   z-index: 3;
   background: #fbfcfd;
 }
@@ -385,12 +386,12 @@ button:hover {
 
 @media (max-width: 720px) {
   :root {
-    --sticky-table-top: 164px;
+    --fixed-controls-height: 164px;
   }
 
   .shell {
     width: 100%;
-    padding: 10px 0 18px;
+    padding: calc(var(--fixed-controls-height) + 10px) 0 18px;
   }
 
   .topbar {
@@ -398,8 +399,7 @@ button:hover {
   }
 
   .stickyControls {
-    margin-left: -10px;
-    margin-right: -10px;
+    width: 100%;
     padding: 8px 10px 10px;
   }
 
