@@ -23,6 +23,7 @@ const els = {
   styleSearch: document.querySelector("#styleSearch"),
   exportButton: document.querySelector("#exportButton"),
   importButton: document.querySelector("#importButton"),
+  importFile: document.querySelector("#importFile"),
   dataPanel: document.querySelector("#dataPanel"),
   dataPanelTitle: document.querySelector("#dataPanelTitle"),
   dataText: document.querySelector("#dataText"),
@@ -640,39 +641,54 @@ function searchStyle() {
   panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function showDataPanel(mode) {
-  const isExport = mode === "export";
-  els.dataPanel.hidden = false;
-  els.dataPanelTitle.textContent = isExport ? "导出库存数据" : "导入库存数据";
-  els.copyDataButton.hidden = !isExport;
-  els.applyImportButton.hidden = isExport;
-  els.dataText.value = isExport ? JSON.stringify(currentInventoryData(), null, 2) : "";
-  els.dataText.placeholder = isExport ? "" : "把导出的库存数据粘贴到这里，然后点“确认导入”。";
-  els.dataText.focus();
-  els.dataText.select();
+function inventoryFileName() {
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0")
+  ].join("");
+  return `服装库存-${stamp}.json`;
 }
 
-async function copyExportData() {
-  els.dataText.focus();
-  els.dataText.select();
-  try {
-    await navigator.clipboard.writeText(els.dataText.value);
-  } catch {
-    document.execCommand("copy");
+function exportInventoryFile() {
+  const fileName = inventoryFileName();
+  const content = JSON.stringify(currentInventoryData(), null, 2);
+
+  if (window.AndroidInventory?.saveFile) {
+    window.AndroidInventory.saveFile(fileName, content);
+    return;
   }
-  alert("已复制库存数据");
+
+  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
-async function applyImportData() {
-  if (!confirm("确定导入这份数据吗？当前库存会被覆盖。")) return;
+function chooseImportFile() {
+  els.importFile.value = "";
+  els.importFile.click();
+}
+
+async function importInventoryFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (!confirm("确定导入这个库存文件吗？当前库存会被覆盖。")) return;
 
   try {
-    const data = JSON.parse(els.dataText.value);
+    const data = JSON.parse(await file.text());
     await importInventoryData(data);
-    els.dataPanel.hidden = true;
     alert("导入完成");
   } catch (error) {
-    alert(error.message || "导入失败");
+    alert(error.message || "导入失败，请确认选择的是导出的库存 JSON 文件");
   }
 }
 
@@ -772,10 +788,11 @@ els.pageTabs.addEventListener("click", event => {
 
 els.styleForm.addEventListener("submit", addStyle);
 els.styleSearch.addEventListener("input", searchStyle);
-els.exportButton.addEventListener("click", () => showDataPanel("export"));
-els.importButton.addEventListener("click", () => showDataPanel("import"));
-els.copyDataButton.addEventListener("click", copyExportData);
-els.applyImportButton.addEventListener("click", applyImportData);
+els.exportButton.addEventListener("click", exportInventoryFile);
+els.importButton.addEventListener("click", chooseImportFile);
+els.importFile.addEventListener("change", importInventoryFile);
+els.copyDataButton.addEventListener("click", exportInventoryFile);
+els.applyImportButton.addEventListener("click", importInventoryFile);
 els.closeDataPanel.addEventListener("click", () => {
   els.dataPanel.hidden = true;
 });
