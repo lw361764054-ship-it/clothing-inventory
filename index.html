@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>服装库存管理</title>
+    <meta name="theme-color" content="#126e82">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="服装库存">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>服装库存管理</h1>
+          <p id="syncStatus">正在连接同步...</p>
+        </div>
+        <nav class="pageTabs" id="pageTabs"></nav>
+        <div class="quickAdd">
+          <form id="styleForm">
+            <input id="newStyle" autocomplete="off" placeholder="新增款名">
+            <button type="submit">加款</button>
+          </form>
+          <input id="styleSearch" autocomplete="off" placeholder="搜索款名定位">
+          <form id="colorForm">
+            <input id="newColor" autocomplete="off" placeholder="新增颜色">
+            <button type="submit">加行</button>
+          </form>
+          <form id="sizeForm">
+            <input id="newSize" autocomplete="off" placeholder="新增尺码">
+            <button type="submit">加列</button>
+          </form>
+          <button id="exportButton" class="secondaryButton" type="button">导出数据</button>
+          <button id="importButton" class="secondaryButton" type="button">导入数据</button>
+        </div>
+      </section>
+
+      <section class="dataPanel" id="dataPanel" hidden>
+        <div class="dataPanelHeader">
+          <strong id="dataPanelTitle">同步数据</strong>
+          <button id="closeDataPanel" class="secondaryButton" type="button">关闭</button>
+        </div>
+        <textarea id="dataText" spellcheck="false"></textarea>
+        <div class="dataActions">
+          <button id="copyDataButton" class="secondaryButton" type="button">复制</button>
+          <button id="applyImportButton" type="button">确认导入</button>
+        </div>
+      </section>
+
+      <section class="sheets" id="sheets"></section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

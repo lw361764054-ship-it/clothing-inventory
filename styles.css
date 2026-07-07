@@ -1,0 +1,469 @@
+:root {
+  color-scheme: light;
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --text: #222831;
+  --muted: #6b7280;
+  --line: #dde2e8;
+  --line-strong: #c8d0d9;
+  --active: #126e82;
+  --active-soft: rgba(18, 110, 130, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  width: min(100% - 24px, 1280px);
+  margin: 0 auto;
+  padding: 18px 0 28px;
+}
+
+.topbar {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.quickAdd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  order: 2;
+  justify-content: flex-start;
+}
+
+.quickAdd form {
+  display: flex;
+  gap: 6px;
+}
+
+.quickAdd input {
+  width: 128px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
+}
+
+#styleSearch {
+  width: 160px;
+}
+
+button {
+  height: 38px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 13px;
+  background: var(--active);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+button:hover {
+  filter: brightness(0.94);
+}
+
+.secondaryButton {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--text);
+}
+
+.dataPanel {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.dataPanelHeader,
+.dataActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dataPanelHeader {
+  margin-bottom: 10px;
+}
+
+.dataActions {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+#dataText {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 10px;
+  resize: vertical;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sheets {
+  display: grid;
+  gap: 28px;
+}
+
+.pageTabs {
+  display: flex;
+  gap: 8px;
+  order: 1;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.pageTab {
+  min-width: 88px;
+  font-size: 18px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--text);
+}
+
+.pageTab.active {
+  border-color: var(--active);
+  background: var(--active);
+  color: #fff;
+}
+
+.emptyPage {
+  padding: 28px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+  text-align: center;
+}
+
+.sheetPanel {
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sheetPanel.matched {
+  border-color: var(--active);
+  box-shadow: 0 0 0 3px var(--active-soft);
+}
+
+.sheetWrap {
+  width: 100%;
+  overflow: auto;
+}
+
+.inventorySheet {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.inventorySheet th,
+.inventorySheet td {
+  width: 92px;
+  height: 46px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0;
+  background: #fff;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.inventorySheet th {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.inventorySheet thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fbfcfd;
+}
+
+.inventorySheet .corner,
+.inventorySheet .rowHead {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 92px;
+  background: #fbfcfd;
+  text-align: left;
+  padding-left: 16px;
+}
+
+.inventorySheet .corner {
+  z-index: 4;
+}
+
+.inventorySheet .actionHead,
+.inventorySheet .deleteCell {
+  width: 74px;
+}
+
+.cellInput {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0 8px;
+  text-align: center;
+  color: var(--text);
+  background: transparent;
+  font-size: 18px;
+  font-weight: 700;
+  outline: none;
+}
+
+.colorInput {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0 8px 0 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.deleteRowButton {
+  width: 54px;
+  height: 30px;
+  min-width: 54px;
+  border: 1px solid #efb8b8;
+  border-radius: 5px;
+  padding: 0;
+  background: #fff;
+  color: #b42318;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.deleteRowButton:hover {
+  background: #fff1f0;
+  filter: none;
+}
+
+.deleteRowButton:disabled {
+  opacity: 0.5;
+}
+
+.styleInput {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0 8px 0 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.styleInput:focus {
+  background: var(--active-soft);
+  box-shadow: inset 0 0 0 2px var(--active);
+}
+
+.styleInput.saving {
+  color: var(--active);
+}
+
+.colorInput:focus {
+  background: var(--active-soft);
+  box-shadow: inset 0 0 0 2px var(--active);
+}
+
+.colorInput.saving {
+  color: var(--active);
+}
+
+.cellInput:focus {
+  background: var(--active-soft);
+  box-shadow: inset 0 0 0 2px var(--active);
+}
+
+.cellInput.saving {
+  color: var(--active);
+}
+
+.cellInput::-webkit-outer-spin-button,
+.cellInput::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    width: 100%;
+    padding: 10px 0 18px;
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .quickAdd {
+    justify-content: stretch;
+  }
+
+  .quickAdd form {
+    flex: 1 1 160px;
+  }
+
+  .quickAdd input {
+    flex: 1;
+    width: 0;
+  }
+
+  .quickAdd > button {
+    flex: 1 1 92px;
+  }
+
+  .dataPanel {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .dataPanelHeader,
+  .dataActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #dataText {
+    min-height: 220px;
+  }
+
+  #styleSearch {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .sheets {
+    gap: 22px;
+  }
+
+  .pageTabs {
+    order: 0;
+    gap: 6px;
+    margin-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .pageTab {
+    flex: 1 0 78px;
+    min-width: 78px;
+    padding: 0 8px;
+    font-size: 16px;
+  }
+
+  .sheetPanel {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
+  .sheetWrap {
+    max-height: calc(100vh - 150px);
+  }
+
+  .inventorySheet {
+    min-width: 388px;
+  }
+
+  .inventorySheet th,
+  .inventorySheet td {
+    width: 36px;
+    height: 38px;
+  }
+
+  .inventorySheet .corner,
+  .inventorySheet .rowHead {
+    width: 52px;
+    padding-left: 6px;
+  }
+
+  .inventorySheet .actionHead,
+  .inventorySheet .deleteCell {
+    width: 48px;
+  }
+
+  .inventorySheet th,
+  .cellInput,
+  .colorInput,
+  .styleInput {
+    font-size: 12px;
+  }
+
+  .cellInput {
+    padding: 0 2px;
+  }
+
+  .colorInput,
+  .styleInput {
+    padding-right: 2px;
+  }
+
+  .deleteRowButton {
+    width: 38px;
+    height: 26px;
+    min-width: 38px;
+    font-size: 12px;
+  }
+}
