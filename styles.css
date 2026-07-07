@@ -196,6 +196,29 @@ button:hover {
   box-shadow: 0 0 0 3px var(--active-soft);
 }
 
+.sheetTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid var(--line-strong);
+  background: #fbfcfd;
+}
+
+.sheetTools form {
+  display: flex;
+  gap: 6px;
+}
+
+.sheetTools input {
+  width: 160px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
+}
+
 .sheetWrap {
   width: 100%;
   overflow: auto;
@@ -421,6 +444,22 @@ button:hover {
     border-left: 0;
     border-right: 0;
     border-radius: 0;
+  }
+
+  .sheetTools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .sheetTools form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .sheetTools input {
+    width: 100%;
+    min-width: 0;
   }
 
   .sheetWrap {

@@ -101,8 +101,21 @@ function normalizeInventoryData(data) {
       ? page.styles
       : [{ id: makeId("style"), name: "款1", matrix: {} }];
     page.styles.forEach(style => {
-      const sizes = next.settings.sizes || [];
-      const colors = next.settings.colors || [];
+      const matrixColors = Object.keys(style.matrix || {});
+      const matrixSizes = Object.values(style.matrix || {})
+        .flatMap(row => Object.keys(row || {}));
+      const sizes = uniqueList([
+        ...(Array.isArray(style.sizes) ? style.sizes : []),
+        ...matrixSizes,
+        ...(next.settings.sizes || [])
+      ]);
+      const colors = uniqueList([
+        ...(Array.isArray(style.colors) ? style.colors : []),
+        ...matrixColors,
+        ...(next.settings.colors || [])
+      ]);
+      style.sizes = sizes;
+      style.colors = colors;
       style.matrix = style.matrix || {};
       colors.forEach(color => {
         style.matrix[color] = style.matrix[color] || {};
@@ -131,8 +144,10 @@ async function loadLocalInventory() {
 }
 
 function ensureStyleMatrix(style) {
-  const sizes = state.settings.sizes || [];
-  const colors = state.settings.colors || [];
+  const sizes = styleSizes(style);
+  const colors = styleColors(style);
+  style.sizes = sizes;
+  style.colors = colors;
   style.matrix = style.matrix || {};
   colors.forEach(color => {
     style.matrix[color] = style.matrix[color] || {};
@@ -140,6 +155,25 @@ function ensureStyleMatrix(style) {
       if (style.matrix[color][size] == null) style.matrix[color][size] = 0;
     });
   });
+}
+
+function styleSizes(style) {
+  const fromStyle = Array.isArray(style?.sizes) ? style.sizes : [];
+  const fromMatrix = Object.values(style?.matrix || {})
+    .flatMap(row => Object.keys(row || {}));
+  const fallback = fromStyle.length ? [] : (state.settings.sizes || []);
+  return uniqueList([...fromStyle, ...fromMatrix, ...fallback]);
+}
+
+function styleColors(style) {
+  const fromStyle = Array.isArray(style?.colors) ? style.colors : [];
+  const fromMatrix = Object.keys(style?.matrix || {});
+  const fallback = fromStyle.length ? [] : (state.settings.colors || []);
+  return uniqueList([...fromStyle, ...fromMatrix, ...fallback]);
+}
+
+function uniqueList(values) {
+  return [...new Set(values.map(value => String(value || "").trim()).filter(Boolean))];
 }
 
 function handleLocalRequest(url, options = {}) {
@@ -160,6 +194,44 @@ function handleLocalRequest(url, options = {}) {
     const style = { id: makeId("style"), name: body.name.trim(), matrix: {} };
     ensureStyleMatrix(style);
     page.styles.push(style);
+  } else if (pathname === "/api/style-colors" && method === "POST") {
+    const style = findLocalStyle(body.pageId, body.styleId);
+    const color = body.color?.trim();
+    if (!color) throw new Error("请输入颜色");
+    ensureStyleMatrix(style);
+    if (!style.colors.includes(color)) style.colors.push(color);
+    style.matrix[color] = style.matrix[color] || {};
+    style.sizes.forEach(size => {
+      if (style.matrix[color][size] == null) style.matrix[color][size] = 0;
+    });
+  } else if (pathname === "/api/style-colors" && method === "PUT") {
+    const style = findLocalStyle(body.pageId, body.styleId);
+    const oldColor = body.oldColor;
+    const newColor = body.newColor?.trim();
+    if (!newColor) throw new Error("请输入颜色");
+    ensureStyleMatrix(style);
+    if (oldColor !== newColor && style.colors.includes(newColor)) throw new Error("这个款已有这个颜色");
+    style.colors = style.colors.map(color => color === oldColor ? newColor : color);
+    if (style.matrix[oldColor] && oldColor !== newColor) {
+      style.matrix[newColor] = style.matrix[oldColor];
+      delete style.matrix[oldColor];
+    }
+  } else if (pathname === "/api/style-colors" && method === "DELETE") {
+    const style = findLocalStyle(body.pageId, body.styleId);
+    const color = body.color;
+    ensureStyleMatrix(style);
+    style.colors = style.colors.filter(next => next !== color);
+    delete style.matrix[color];
+  } else if (pathname === "/api/style-sizes" && method === "POST") {
+    const style = findLocalStyle(body.pageId, body.styleId);
+    const size = body.size?.trim();
+    if (!size) throw new Error("请输入尺码");
+    ensureStyleMatrix(style);
+    if (!style.sizes.includes(size)) style.sizes.push(size);
+    style.colors.forEach(color => {
+      style.matrix[color] = style.matrix[color] || {};
+      if (style.matrix[color][size] == null) style.matrix[color][size] = 0;
+    });
   } else if (pathname === "/api/colors" && method === "POST") {
     const color = body.color?.trim();
     if (!color) throw new Error("请输入颜色");
@@ -264,6 +336,13 @@ function activePage() {
   return state.pages.find(page => page.id === state.activePageId) || state.pages[0] || { styles: [] };
 }
 
+function findLocalStyle(pageId, styleId) {
+  const targetPage = state.pages.find(page => page.id === pageId) || activePage();
+  const style = targetPage.styles.find(next => next.id === styleId);
+  if (!style) throw new Error("没有找到这个款");
+  return style;
+}
+
 function renderTabs() {
   els.pageTabs.innerHTML = state.pages.map(page => `
     <button
@@ -275,8 +354,6 @@ function renderTabs() {
 }
 
 function renderSheets() {
-  const sizes = state.settings.sizes || [];
-  const colors = state.settings.colors || [];
   const page = activePage();
 
   if (!page.styles.length) {
@@ -285,6 +362,9 @@ function renderSheets() {
   }
 
   els.sheets.innerHTML = page.styles.map(style => {
+    ensureStyleMatrix(style);
+    const sizes = styleSizes(style);
+    const colors = styleColors(style);
     const head = `
       <thead>
         <tr>
@@ -333,6 +413,8 @@ function renderSheets() {
             <input
               class="colorInput"
               value="${escapeHtml(color)}"
+              data-page-id="${escapeHtml(page.id)}"
+              data-style-id="${escapeHtml(style.id)}"
               data-old-color="${escapeHtml(color)}"
               aria-label="${escapeHtml(color)} 颜色名称"
             >
@@ -342,6 +424,8 @@ function renderSheets() {
             <button
               class="deleteRowButton"
               type="button"
+              data-page-id="${escapeHtml(page.id)}"
+              data-style-id="${escapeHtml(style.id)}"
               data-color="${escapeHtml(color)}"
               title="删除这一行"
               aria-label="删除 ${escapeHtml(color)} 这一行"
@@ -353,6 +437,16 @@ function renderSheets() {
 
     return `
       <article class="sheetPanel" data-style-id="${escapeHtml(style.id)}" data-style-name="${escapeHtml(style.name)}">
+        <div class="sheetTools">
+          <form class="styleColorForm" data-page-id="${escapeHtml(page.id)}" data-style-id="${escapeHtml(style.id)}">
+            <input autocomplete="off" name="color" placeholder="本款新增颜色">
+            <button type="submit">加行</button>
+          </form>
+          <form class="styleSizeForm" data-page-id="${escapeHtml(page.id)}" data-style-id="${escapeHtml(style.id)}">
+            <input autocomplete="off" name="size" placeholder="本款新增尺码">
+            <button type="submit">加列</button>
+          </form>
+        </div>
         <div class="sheetWrap">
           <table class="inventorySheet">
             ${head}
@@ -402,6 +496,8 @@ async function updateCell(input) {
 }
 
 async function renameColor(input) {
+  const pageId = input.dataset.pageId;
+  const styleId = input.dataset.styleId;
   const oldColor = input.dataset.oldColor;
   const newColor = input.value.trim();
 
@@ -414,9 +510,9 @@ async function renameColor(input) {
 
   input.classList.add("saving");
   try {
-    await requestJson("/api/colors", {
+    await requestJson("/api/style-colors", {
       method: "PUT",
-      body: JSON.stringify({ oldColor, newColor })
+      body: JSON.stringify({ pageId, styleId, oldColor, newColor })
     });
   } catch (error) {
     input.value = oldColor;
@@ -427,14 +523,17 @@ async function renameColor(input) {
 }
 
 async function deleteColor(button) {
+  const pageId = button.dataset.pageId;
+  const styleId = button.dataset.styleId;
   const color = button.dataset.color;
   if (!color) return;
-  if (!confirm(`确定删除“${color}”这一行吗？所有款里的这一行库存都会删除。`)) return;
+  if (!confirm(`确定只删除这个款里的“${color}”这一行吗？`)) return;
 
   button.disabled = true;
   try {
-    await requestJson(`/api/colors/${encodeURIComponent(color)}`, {
-      method: "DELETE"
+    await requestJson("/api/style-colors", {
+      method: "DELETE",
+      body: JSON.stringify({ pageId, styleId, color })
     });
   } catch (error) {
     button.disabled = false;
@@ -486,15 +585,21 @@ async function addStyle(event) {
 
 async function addColor(event) {
   event.preventDefault();
-  const color = els.newColor.value.trim();
+  const form = event.target.closest(".styleColorForm");
+  const colorInput = form.elements.color;
+  const color = colorInput.value.trim();
   if (!color) return;
 
   try {
-    await requestJson("/api/colors", {
+    await requestJson("/api/style-colors", {
       method: "POST",
-      body: JSON.stringify({ color })
+      body: JSON.stringify({
+        pageId: form.dataset.pageId,
+        styleId: form.dataset.styleId,
+        color
+      })
     });
-    els.newColor.value = "";
+    colorInput.value = "";
   } catch (error) {
     alert(error.message);
   }
@@ -502,15 +607,21 @@ async function addColor(event) {
 
 async function addSize(event) {
   event.preventDefault();
-  const size = els.newSize.value.trim();
+  const form = event.target.closest(".styleSizeForm");
+  const sizeInput = form.elements.size;
+  const size = sizeInput.value.trim();
   if (!size) return;
 
   try {
-    await requestJson("/api/sizes", {
+    await requestJson("/api/style-sizes", {
       method: "POST",
-      body: JSON.stringify({ size })
+      body: JSON.stringify({
+        pageId: form.dataset.pageId,
+        styleId: form.dataset.styleId,
+        size
+      })
     });
-    els.newSize.value = "";
+    sizeInput.value = "";
   } catch (error) {
     alert(error.message);
   }
@@ -635,6 +746,17 @@ els.sheets.addEventListener("keydown", event => {
   }
 });
 
+els.sheets.addEventListener("submit", event => {
+  const colorForm = event.target.closest(".styleColorForm");
+  if (colorForm) {
+    addColor(event);
+    return;
+  }
+
+  const sizeForm = event.target.closest(".styleSizeForm");
+  if (sizeForm) addSize(event);
+});
+
 els.pageTabs.addEventListener("click", event => {
   const button = event.target.closest(".pageTab");
   if (!button) return;
@@ -649,8 +771,6 @@ els.pageTabs.addEventListener("click", event => {
 });
 
 els.styleForm.addEventListener("submit", addStyle);
-els.colorForm.addEventListener("submit", addColor);
-els.sizeForm.addEventListener("submit", addSize);
 els.styleSearch.addEventListener("input", searchStyle);
 els.exportButton.addEventListener("click", () => showDataPanel("export"));
 els.importButton.addEventListener("click", () => showDataPanel("import"));
