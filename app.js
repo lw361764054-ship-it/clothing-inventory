@@ -458,7 +458,7 @@ function renderSheets() {
             type="button"
             data-page-id="${escapeHtml(page.id)}"
             data-style-id="${escapeHtml(style.id)}"
-          >识别图片加行</button>
+          >导入TXT加行</button>
         </div>
         <div class="sheetWrap">
           <table class="inventorySheet">
@@ -640,61 +640,7 @@ async function addSize(event) {
   }
 }
 
-function recognizeImageTextWithDetector(file) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const url = URL.createObjectURL(file);
-    image.onload = async () => {
-      try {
-        const detector = new TextDetector();
-        const results = await detector.detect(image);
-        resolve(results.map(item => item.rawValue || "").join("\n"));
-      } catch (error) {
-        reject(error);
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("图片读取失败，请换一张更清楚的图片。"));
-    };
-    image.src = url;
-  });
-}
-
-function loadTesseract() {
-  if (window.Tesseract) return Promise.resolve(window.Tesseract);
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-    script.async = true;
-    script.onload = () => {
-      if (window.Tesseract) {
-        resolve(window.Tesseract);
-      } else {
-        reject(new Error("识别器加载失败，请检查电脑网络后重试。"));
-      }
-    };
-    script.onerror = () => reject(new Error("识别器加载失败，请检查电脑网络后重试。"));
-    document.head.appendChild(script);
-  });
-}
-
-async function recognizeImageText(file, onStatus = () => {}) {
-  if ("TextDetector" in window) {
-    return recognizeImageTextWithDetector(file);
-  }
-
-  onStatus("加载识别器...");
-  const tesseract = await loadTesseract();
-  onStatus("识别中...");
-  const result = await tesseract.recognize(file, "chi_sim+eng");
-  return result?.data?.text || "";
-}
-
-function parseRecognizedRows(text) {
+function parseTextRows(text) {
   const blocked = [
     "颜色分类",
     "添加图片",
@@ -706,6 +652,8 @@ function parseRecognizedRows(text) {
 
   return uniqueList(
     String(text || "")
+      .replaceAll("删除", "")
+      .replace(/[ \u3000]+/g, "")
       .replace(/[|｜]/g, "\n")
       .split(/[\n\r\t]+/)
       .flatMap(line => line.split(/\s{2,}/))
@@ -718,11 +666,11 @@ function parseRecognizedRows(text) {
   );
 }
 
-function chooseImageFile() {
+function chooseTextFile() {
   return new Promise(resolve => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = ".txt,text/plain";
     input.hidden = true;
     document.body.appendChild(input);
     input.addEventListener("change", () => {
@@ -734,24 +682,22 @@ function chooseImageFile() {
   });
 }
 
-async function addRecognizedRows(button) {
-  const file = await chooseImageFile();
+async function addTextRows(button) {
+  const file = await chooseTextFile();
   if (!file) return;
 
   button.disabled = true;
   const oldText = button.textContent;
-  button.textContent = "识别中...";
+  button.textContent = "读取中...";
   try {
-    const text = await recognizeImageText(file, status => {
-      button.textContent = status;
-    });
-    const rows = parseRecognizedRows(text);
+    const text = await file.text();
+    const rows = parseTextRows(text);
     if (!rows.length) {
-      alert("没有识别到可添加的规格，请换一张更清楚的图片。");
+      alert("TXT 里没有找到可添加的规格。");
       return;
     }
 
-    const ok = confirm(`识别到 ${rows.length} 个规格，是否加到这个款？\n\n${rows.join("\n")}`);
+    const ok = confirm(`读取到 ${rows.length} 个规格，是否加到这个款？\n\n${rows.join("\n")}`);
     if (!ok) return;
 
     for (const color of rows) {
@@ -766,7 +712,7 @@ async function addRecognizedRows(button) {
     }
     alert(`已加行：${rows.length} 个`);
   } catch (error) {
-    alert(error.message || "图片识别失败，请换一张更清楚的图片。");
+    alert(error.message || "TXT 读取失败，请确认选择的是文本文档。");
   } finally {
     button.disabled = false;
     button.textContent = oldText;
@@ -899,7 +845,7 @@ els.sheets.addEventListener("click", event => {
   if (deleteButton) deleteColor(deleteButton);
 
   const ocrButton = event.target.closest(".ocrButton");
-  if (ocrButton) addRecognizedRows(ocrButton);
+  if (ocrButton) addTextRows(ocrButton);
 });
 
 els.sheets.addEventListener("keydown", event => {
