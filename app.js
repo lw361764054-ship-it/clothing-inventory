@@ -589,6 +589,15 @@ function renderSheets() {
             <tbody>${rows}</tbody>
           </table>
         </div>
+        <div class="sheetFooter">
+          <button
+            class="deleteStyleButton"
+            type="button"
+            data-page-id="${escapeHtml(page.id)}"
+            data-style-id="${escapeHtml(style.id)}"
+            data-style-name="${escapeHtml(style.name)}"
+          >删除款</button>
+        </div>
       </article>
     `;
   }).join("");
@@ -674,6 +683,26 @@ async function deleteColor(button) {
   } catch (error) {
     button.disabled = false;
     alert(error.message);
+  }
+}
+
+async function deleteStyle(button) {
+  const pageId = button.dataset.pageId;
+  const styleId = button.dataset.styleId;
+  const styleName = button.dataset.styleName || "这个款";
+  const page = state.pages.find(next => next.id === pageId);
+  if (!page) return;
+  const index = page.styles.findIndex(style => style.id === styleId);
+  if (index < 0) return;
+  if (!confirm(`确定删除“${styleName}”这个款吗？里面的库存也会一起删除。`)) return;
+
+  page.styles.splice(index, 1);
+  button.disabled = true;
+  try {
+    await importInventoryData(currentInventoryData());
+  } catch (error) {
+    alert(error.message || "删除款失败");
+    button.disabled = false;
   }
 }
 
@@ -966,6 +995,9 @@ els.sheets.addEventListener("focusin", event => {
 els.sheets.addEventListener("click", event => {
   const deleteButton = event.target.closest(".deleteRowButton");
   if (deleteButton) deleteColor(deleteButton);
+
+  const deleteStyleButton = event.target.closest(".deleteStyleButton");
+  if (deleteStyleButton) deleteStyle(deleteStyleButton);
 
   const ocrButton = event.target.closest(".ocrButton");
   if (ocrButton) addTextRows(ocrButton);

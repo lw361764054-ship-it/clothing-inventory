@@ -284,6 +284,25 @@ button:hover {
   overflow: auto;
 }
 
+.sheetFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+  border-top: 1px solid var(--line-strong);
+  background: #fbfcfd;
+}
+
+.deleteStyleButton {
+  border: 1px solid #efb8b8;
+  background: #fff;
+  color: #b42318;
+}
+
+.deleteStyleButton:hover {
+  background: #fff1f0;
+  filter: none;
+}
+
 .inventorySheet {
   width: 100%;
   min-width: 800px;
@@ -553,6 +572,10 @@ button:hover {
   .sheetTools input {
     width: 100%;
     min-width: 0;
+  }
+
+  .sheetFooter {
+    padding: 8px 10px;
   }
 
   .sheetWrap {
