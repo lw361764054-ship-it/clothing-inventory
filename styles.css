@@ -101,15 +101,26 @@ p {
   width: 160px;
 }
 
-.columnControl {
+.columnControl,
+.pageControl {
   display: flex;
   align-items: center;
   gap: 6px;
   height: 38px;
 }
 
-.columnControl button {
+.columnControl button,
+.pageControl button {
   min-width: 58px;
+}
+
+.pageControl input {
+  width: 128px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
 }
 
 .columnControl span {
@@ -467,6 +478,17 @@ button:hover {
 
   .columnControl button {
     flex: 1;
+  }
+
+  .pageControl {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    height: auto;
+  }
+
+  .pageControl input {
+    flex: 1 1 145px;
+    width: 0;
   }
 
   .dataPanel {

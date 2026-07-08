@@ -27,6 +27,12 @@ const els = {
   narrowColumns: document.querySelector("#narrowColumns"),
   wideColumns: document.querySelector("#wideColumns"),
   columnWidthLabel: document.querySelector("#columnWidthLabel"),
+  newPageName: document.querySelector("#newPageName"),
+  addPageButton: document.querySelector("#addPageButton"),
+  renamePageName: document.querySelector("#renamePageName"),
+  renamePageButton: document.querySelector("#renamePageButton"),
+  movePageLeft: document.querySelector("#movePageLeft"),
+  movePageRight: document.querySelector("#movePageRight"),
   dataPanel: document.querySelector("#dataPanel"),
   dataPanelTitle: document.querySelector("#dataPanelTitle"),
   dataText: document.querySelector("#dataText"),
@@ -351,6 +357,10 @@ function activePage() {
   return state.pages.find(page => page.id === state.activePageId) || state.pages[0] || { styles: [] };
 }
 
+function activePageIndex() {
+  return state.pages.findIndex(page => page.id === activePage().id);
+}
+
 function findLocalStyle(pageId, styleId) {
   const targetPage = state.pages.find(page => page.id === pageId) || activePage();
   const style = targetPage.styles.find(next => next.id === styleId);
@@ -366,7 +376,69 @@ function renderTabs() {
       data-page-id="${escapeHtml(page.id)}"
     >${escapeHtml(page.name)}</button>
   `).join("");
+  if (els.renamePageName) els.renamePageName.value = activePage().name || "";
   updateFixedControlsOffset();
+}
+
+async function persistPages() {
+  const data = currentInventoryData();
+  if (isLocalMode()) {
+    saveLocalInventory();
+    setState(data);
+    return;
+  }
+  await importInventoryData(data);
+}
+
+async function addPage() {
+  const name = els.newPageName.value.trim();
+  if (!name) return;
+  if (state.pages.some(page => page.name === name)) {
+    alert("已经有这个页面名了");
+    return;
+  }
+
+  const page = {
+    id: makeId("page"),
+    name,
+    styles: [{
+      id: makeId("style"),
+      name: "款1",
+      colors: ["黑色"],
+      sizes: cloneData(state.settings.sizes || []),
+      matrix: {}
+    }]
+  };
+  state.pages.push(page);
+  state.activePageId = page.id;
+  localStorage.setItem("activePageId", state.activePageId);
+  els.newPageName.value = "";
+  await persistPages();
+}
+
+async function renamePage() {
+  const page = activePage();
+  const name = els.renamePageName.value.trim();
+  if (!name) {
+    els.renamePageName.value = page.name || "";
+    return;
+  }
+  if (state.pages.some(next => next.id !== page.id && next.name === name)) {
+    alert("已经有这个页面名了");
+    els.renamePageName.value = page.name || "";
+    return;
+  }
+  page.name = name;
+  await persistPages();
+}
+
+async function movePage(offset) {
+  const index = activePageIndex();
+  const nextIndex = index + offset;
+  if (index < 0 || nextIndex < 0 || nextIndex >= state.pages.length) return;
+  const [page] = state.pages.splice(index, 1);
+  state.pages.splice(nextIndex, 0, page);
+  await persistPages();
 }
 
 function cssNumber(name, fallback) {
@@ -938,6 +1010,16 @@ els.importButton.addEventListener("click", chooseImportFile);
 els.importFile.addEventListener("change", importInventoryFile);
 els.narrowColumns.addEventListener("click", () => changeColumnWidth(-COLUMN_WIDTH_STEP));
 els.wideColumns.addEventListener("click", () => changeColumnWidth(COLUMN_WIDTH_STEP));
+els.addPageButton.addEventListener("click", addPage);
+els.renamePageButton.addEventListener("click", renamePage);
+els.renamePageName.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    renamePage();
+  }
+});
+els.movePageLeft.addEventListener("click", () => movePage(-1));
+els.movePageRight.addEventListener("click", () => movePage(1));
 els.copyDataButton.addEventListener("click", exportInventoryFile);
 els.applyImportButton.addEventListener("click", importInventoryFile);
 els.closeDataPanel.addEventListener("click", () => {
