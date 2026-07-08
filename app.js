@@ -23,6 +23,8 @@ const els = {
   styleSearch: document.querySelector("#styleSearch"),
   exportButton: document.querySelector("#exportButton"),
   importButton: document.querySelector("#importButton"),
+  totalPageButton: document.querySelector("#totalPageButton"),
+  pageTotalLabel: document.querySelector("#pageTotalLabel"),
   importFile: document.querySelector("#importFile"),
   narrowColumns: document.querySelector("#narrowColumns"),
   wideColumns: document.querySelector("#wideColumns"),
@@ -347,6 +349,12 @@ function displayQuantity(value) {
   return quantity === 0 ? "" : quantity;
 }
 
+function updatePageTotal() {
+  const total = [...els.sheets.querySelectorAll(".cellInput")]
+    .reduce((sum, input) => sum + Math.max(0, Math.floor(Number(input.value || 0))), 0);
+  els.pageTotalLabel.textContent = `本页合计：${total}`;
+}
+
 function setState(data) {
   state.settings = data.settings || state.settings;
   state.pages = Array.isArray(data.pages) ? data.pages : [];
@@ -391,6 +399,7 @@ async function persistPages() {
   if (isLocalMode()) {
     saveLocalInventory();
     setState(data);
+    updatePageTotal();
     return;
   }
   await importInventoryData(data);
@@ -607,6 +616,7 @@ function renderSheets() {
       </article>
     `;
   }).join("");
+  updatePageTotal();
 }
 
 async function requestJson(url, options) {
@@ -643,6 +653,7 @@ async function updateCell(input) {
   } finally {
     pending.delete(key);
     input.classList.remove("saving");
+    updatePageTotal();
   }
 }
 
@@ -1076,6 +1087,7 @@ els.styleSearch.addEventListener("input", searchStyle);
 els.exportButton.addEventListener("click", exportInventoryFile);
 els.importButton.addEventListener("click", chooseImportFile);
 els.importFile.addEventListener("change", importInventoryFile);
+els.totalPageButton.addEventListener("click", updatePageTotal);
 els.narrowColumns.addEventListener("click", () => changeColumnWidth(-COLUMN_WIDTH_STEP));
 els.wideColumns.addEventListener("click", () => changeColumnWidth(COLUMN_WIDTH_STEP));
 els.addPageButton.addEventListener("click", addPage);
