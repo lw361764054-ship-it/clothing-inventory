@@ -42,6 +42,7 @@ const els = {
 };
 
 const pending = new Map();
+const tabHandledInputs = new WeakSet();
 const COLUMN_WIDTH_KEY = "inventoryColumnWidth";
 const COLUMN_WIDTH_MIN = 32;
 const COLUMN_WIDTH_MAX = 150;
@@ -640,6 +641,24 @@ async function updateCell(input) {
   }
 }
 
+function moveToAdjacentCell(input, direction) {
+  const inputs = [...els.sheets.querySelectorAll(".cellInput")];
+  const index = inputs.indexOf(input);
+  if (index === -1) return;
+
+  const nextInput = inputs[index + direction];
+  tabHandledInputs.add(input);
+  updateCell(input);
+
+  if (!nextInput) {
+    input.blur();
+    return;
+  }
+
+  nextInput.focus();
+  nextInput.select();
+}
+
 async function renameColor(input) {
   const pageId = input.dataset.pageId;
   const styleId = input.dataset.styleId;
@@ -974,7 +993,13 @@ function registerServiceWorker() {
 
 els.sheets.addEventListener("focusout", event => {
   const cellInput = event.target.closest(".cellInput");
-  if (cellInput) updateCell(cellInput);
+  if (cellInput) {
+    if (tabHandledInputs.has(cellInput)) {
+      tabHandledInputs.delete(cellInput);
+    } else {
+      updateCell(cellInput);
+    }
+  }
 
   const colorInput = event.target.closest(".colorInput");
   if (colorInput) renameColor(colorInput);
@@ -1005,6 +1030,12 @@ els.sheets.addEventListener("click", event => {
 
 els.sheets.addEventListener("keydown", event => {
   const input = event.target.closest(".cellInput, .colorInput, .styleInput");
+  if (input?.classList.contains("cellInput") && event.key === "Tab") {
+    event.preventDefault();
+    moveToAdjacentCell(input, event.shiftKey ? -1 : 1);
+    return;
+  }
+
   if (input && event.key === "Enter") {
     event.preventDefault();
     input.blur();
