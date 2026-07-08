@@ -447,6 +447,12 @@ function renderSheets() {
             <input autocomplete="off" name="size" placeholder="本款新增尺码">
             <button type="submit">加列</button>
           </form>
+          <button
+            class="ocrButton"
+            type="button"
+            data-page-id="${escapeHtml(page.id)}"
+            data-style-id="${escapeHtml(style.id)}"
+          >识别图片加行</button>
         </div>
         <div class="sheetWrap">
           <table class="inventorySheet">
@@ -628,6 +634,110 @@ async function addSize(event) {
   }
 }
 
+function recognizeImageText(file) {
+  if (!("TextDetector" in window)) {
+    throw new Error("这个浏览器暂时不支持图片文字识别，请用最新版 Chrome 或 Edge 电脑版打开。");
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = async () => {
+      try {
+        const detector = new TextDetector();
+        const results = await detector.detect(image);
+        resolve(results.map(item => item.rawValue || "").join("\n"));
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("图片读取失败，请换一张更清楚的图片。"));
+    };
+    image.src = url;
+  });
+}
+
+function parseRecognizedRows(text) {
+  const blocked = [
+    "颜色分类",
+    "添加图片",
+    "删除",
+    "开始排序",
+    "添加定制规格",
+    "请输入规格名称"
+  ];
+
+  return uniqueList(
+    String(text || "")
+      .replace(/[|｜]/g, "\n")
+      .split(/[\n\r\t]+/)
+      .flatMap(line => line.split(/\s{2,}/))
+      .map(item => item.trim())
+      .map(item => item.replace(/^[·•\-—\s]+|[·•\-—\s]+$/g, ""))
+      .map(item => item.replace(/\s*[-－–—]\s*/g, "-"))
+      .filter(item => item.length >= 2 && item.length <= 24)
+      .filter(item => !blocked.some(word => item.includes(word)))
+      .filter(item => /[\u4e00-\u9fa5A-Za-z0-9]/.test(item))
+  );
+}
+
+function chooseImageFile() {
+  return new Promise(resolve => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.hidden = true;
+    document.body.appendChild(input);
+    input.addEventListener("change", () => {
+      const file = input.files?.[0] || null;
+      input.remove();
+      resolve(file);
+    }, { once: true });
+    input.click();
+  });
+}
+
+async function addRecognizedRows(button) {
+  const file = await chooseImageFile();
+  if (!file) return;
+
+  button.disabled = true;
+  const oldText = button.textContent;
+  button.textContent = "识别中...";
+  try {
+    const text = await recognizeImageText(file);
+    const rows = parseRecognizedRows(text);
+    if (!rows.length) {
+      alert("没有识别到可添加的规格，请换一张更清楚的图片。");
+      return;
+    }
+
+    const ok = confirm(`识别到 ${rows.length} 个规格，是否加到这个款？\n\n${rows.join("\n")}`);
+    if (!ok) return;
+
+    for (const color of rows) {
+      await requestJson("/api/style-colors", {
+        method: "POST",
+        body: JSON.stringify({
+          pageId: button.dataset.pageId,
+          styleId: button.dataset.styleId,
+          color
+        })
+      });
+    }
+    alert(`已加行：${rows.length} 个`);
+  } catch (error) {
+    alert(error.message || "图片识别失败，请换一张更清楚的图片。");
+  } finally {
+    button.disabled = false;
+    button.textContent = oldText;
+  }
+}
+
 function searchStyle() {
   const keyword = els.styleSearch.value.trim().toLowerCase();
   document.querySelectorAll(".sheetPanel").forEach(panel => panel.classList.remove("matched"));
@@ -752,6 +862,9 @@ els.sheets.addEventListener("focusin", event => {
 els.sheets.addEventListener("click", event => {
   const deleteButton = event.target.closest(".deleteRowButton");
   if (deleteButton) deleteColor(deleteButton);
+
+  const ocrButton = event.target.closest(".ocrButton");
+  if (ocrButton) addRecognizedRows(ocrButton);
 });
 
 els.sheets.addEventListener("keydown", event => {

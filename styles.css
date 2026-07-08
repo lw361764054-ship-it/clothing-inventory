@@ -234,6 +234,17 @@ button:hover {
   background: #fff;
 }
 
+.ocrButton {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--active);
+}
+
+.ocrButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .sheetWrap {
   width: 100%;
   overflow: auto;
@@ -472,6 +483,10 @@ button:hover {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+  }
+
+  .ocrButton {
+    display: none;
   }
 
   .sheetTools form {
