@@ -342,6 +342,11 @@ function quantityFor(style, color, size) {
   return Number(style.matrix?.[color]?.[size] || 0);
 }
 
+function displayQuantity(value) {
+  const quantity = Math.max(0, Math.floor(Number(value || 0)));
+  return quantity === 0 ? "" : quantity;
+}
+
 function setState(data) {
   state.settings = data.settings || state.settings;
   state.pages = Array.isArray(data.pages) ? data.pages : [];
@@ -527,7 +532,7 @@ function renderSheets() {
               inputmode="numeric"
               min="0"
               step="1"
-              value="${escapeHtml(value)}"
+              value="${escapeHtml(displayQuantity(value))}"
               data-page-id="${escapeHtml(page.id)}"
               data-style-id="${escapeHtml(style.id)}"
               data-color="${escapeHtml(color)}"
@@ -624,7 +629,7 @@ async function updateCell(input) {
   const key = keyFor(styleId, color, size);
   const quantity = Math.max(0, Math.floor(Number(input.value || 0)));
 
-  input.value = quantity;
+  input.value = displayQuantity(quantity);
   pending.set(key, quantity);
   input.classList.add("saving");
 
