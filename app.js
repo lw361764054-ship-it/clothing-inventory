@@ -1030,7 +1030,7 @@ els.sheets.addEventListener("click", event => {
 
 els.sheets.addEventListener("keydown", event => {
   const input = event.target.closest(".cellInput, .colorInput, .styleInput");
-  if (input?.classList.contains("cellInput") && event.key === "Tab") {
+  if (input?.classList.contains("cellInput") && (event.key === "Tab" || event.code === "Tab")) {
     event.preventDefault();
     moveToAdjacentCell(input, event.shiftKey ? -1 : 1);
     return;
@@ -1040,7 +1040,7 @@ els.sheets.addEventListener("keydown", event => {
     event.preventDefault();
     input.blur();
   }
-});
+}, true);
 
 els.sheets.addEventListener("submit", event => {
   const colorForm = event.target.closest(".styleColorForm");
