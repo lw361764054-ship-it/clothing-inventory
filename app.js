@@ -640,11 +640,7 @@ async function addSize(event) {
   }
 }
 
-function recognizeImageText(file) {
-  if (!("TextDetector" in window)) {
-    throw new Error("这个浏览器暂时不支持图片文字识别，请用最新版 Chrome 或 Edge 电脑版打开。");
-  }
-
+function recognizeImageTextWithDetector(file) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     const url = URL.createObjectURL(file);
@@ -665,6 +661,37 @@ function recognizeImageText(file) {
     };
     image.src = url;
   });
+}
+
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.Tesseract) {
+        resolve(window.Tesseract);
+      } else {
+        reject(new Error("识别器加载失败，请检查电脑网络后重试。"));
+      }
+    };
+    script.onerror = () => reject(new Error("识别器加载失败，请检查电脑网络后重试。"));
+    document.head.appendChild(script);
+  });
+}
+
+async function recognizeImageText(file, onStatus = () => {}) {
+  if ("TextDetector" in window) {
+    return recognizeImageTextWithDetector(file);
+  }
+
+  onStatus("加载识别器...");
+  const tesseract = await loadTesseract();
+  onStatus("识别中...");
+  const result = await tesseract.recognize(file, "chi_sim+eng");
+  return result?.data?.text || "";
 }
 
 function parseRecognizedRows(text) {
@@ -715,7 +742,9 @@ async function addRecognizedRows(button) {
   const oldText = button.textContent;
   button.textContent = "识别中...";
   try {
-    const text = await recognizeImageText(file);
+    const text = await recognizeImageText(file, status => {
+      button.textContent = status;
+    });
     const rows = parseRecognizedRows(text);
     if (!rows.length) {
       alert("没有识别到可添加的规格，请换一张更清楚的图片。");
