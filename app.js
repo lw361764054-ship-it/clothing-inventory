@@ -24,6 +24,9 @@ const els = {
   exportButton: document.querySelector("#exportButton"),
   importButton: document.querySelector("#importButton"),
   importFile: document.querySelector("#importFile"),
+  narrowColumns: document.querySelector("#narrowColumns"),
+  wideColumns: document.querySelector("#wideColumns"),
+  columnWidthLabel: document.querySelector("#columnWidthLabel"),
   dataPanel: document.querySelector("#dataPanel"),
   dataPanelTitle: document.querySelector("#dataPanelTitle"),
   dataText: document.querySelector("#dataText"),
@@ -33,6 +36,10 @@ const els = {
 };
 
 const pending = new Map();
+const COLUMN_WIDTH_KEY = "inventoryColumnWidth";
+const COLUMN_WIDTH_MIN = 32;
+const COLUMN_WIDTH_MAX = 150;
+const COLUMN_WIDTH_STEP = 8;
 
 function isLocalMode() {
   return location.protocol === "file:" || location.protocol === "content:" || location.hostname.endsWith("github.io");
@@ -337,6 +344,7 @@ function setState(data) {
   }
   renderTabs();
   renderSheets();
+  updateFixedControlsOffset();
 }
 
 function activePage() {
@@ -358,6 +366,49 @@ function renderTabs() {
       data-page-id="${escapeHtml(page.id)}"
     >${escapeHtml(page.name)}</button>
   `).join("");
+  updateFixedControlsOffset();
+}
+
+function cssNumber(name, fallback) {
+  const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function clampColumnWidth(width) {
+  return Math.max(COLUMN_WIDTH_MIN, Math.min(COLUMN_WIDTH_MAX, Math.round(width)));
+}
+
+function currentColumnWidth() {
+  return clampColumnWidth(cssNumber("--cell-width", 92));
+}
+
+function applyColumnWidth(width, save = true) {
+  const next = clampColumnWidth(width);
+  document.documentElement.style.setProperty("--cell-width", `${next}px`);
+  document.documentElement.style.setProperty("--row-head-width", `${Math.max(52, Math.min(92, next + 16))}px`);
+  document.documentElement.style.setProperty("--delete-width", `${Math.max(48, Math.min(74, next))}px`);
+  if (els.columnWidthLabel) els.columnWidthLabel.textContent = `${next}px`;
+  if (save) localStorage.setItem(COLUMN_WIDTH_KEY, String(next));
+  updateFixedControlsOffset();
+}
+
+function changeColumnWidth(delta) {
+  applyColumnWidth(currentColumnWidth() + delta);
+}
+
+function initColumnWidth() {
+  const saved = Number(localStorage.getItem(COLUMN_WIDTH_KEY));
+  if (Number.isFinite(saved) && saved > 0) {
+    applyColumnWidth(saved, false);
+  } else if (els.columnWidthLabel) {
+    els.columnWidthLabel.textContent = `${currentColumnWidth()}px`;
+  }
+}
+
+function updateFixedControlsOffset() {
+  const controls = document.querySelector(".stickyControls");
+  if (!controls) return;
+  document.documentElement.style.setProperty("--fixed-controls-height", `${Math.ceil(controls.getBoundingClientRect().height)}px`);
 }
 
 function renderSheets() {
@@ -885,12 +936,18 @@ els.styleSearch.addEventListener("input", searchStyle);
 els.exportButton.addEventListener("click", exportInventoryFile);
 els.importButton.addEventListener("click", chooseImportFile);
 els.importFile.addEventListener("change", importInventoryFile);
+els.narrowColumns.addEventListener("click", () => changeColumnWidth(-COLUMN_WIDTH_STEP));
+els.wideColumns.addEventListener("click", () => changeColumnWidth(COLUMN_WIDTH_STEP));
 els.copyDataButton.addEventListener("click", exportInventoryFile);
 els.applyImportButton.addEventListener("click", importInventoryFile);
 els.closeDataPanel.addEventListener("click", () => {
   els.dataPanel.hidden = true;
 });
 
+initColumnWidth();
 loadInventory();
 connectEvents();
 registerServiceWorker();
+window.addEventListener("resize", updateFixedControlsOffset);
+setTimeout(updateFixedControlsOffset, 0);
+setTimeout(updateFixedControlsOffset, 300);

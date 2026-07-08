@@ -10,6 +10,9 @@
   --active: #126e82;
   --active-soft: rgba(18, 110, 130, 0.12);
   --fixed-controls-height: 126px;
+  --cell-width: 92px;
+  --row-head-width: 92px;
+  --delete-width: 74px;
 }
 
 * {
@@ -96,6 +99,26 @@ p {
 
 #styleSearch {
   width: 160px;
+}
+
+.columnControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+}
+
+.columnControl button {
+  min-width: 58px;
+}
+
+.columnControl span {
+  min-width: 54px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
 }
 
 button {
@@ -260,7 +283,7 @@ button:hover {
 
 .inventorySheet th,
 .inventorySheet td {
-  width: 92px;
+  width: var(--cell-width);
   height: 46px;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -285,7 +308,7 @@ button:hover {
   position: sticky;
   left: 0;
   z-index: 2;
-  width: 92px;
+  width: var(--row-head-width);
   background: #fbfcfd;
   text-align: left;
   padding-left: 16px;
@@ -297,7 +320,7 @@ button:hover {
 
 .inventorySheet .actionHead,
 .inventorySheet .deleteCell {
-  width: 74px;
+  width: var(--delete-width);
 }
 
 .cellInput {
@@ -398,6 +421,9 @@ button:hover {
 @media (max-width: 720px) {
   :root {
     --fixed-controls-height: 164px;
+    --cell-width: 36px;
+    --row-head-width: 52px;
+    --delete-width: 48px;
   }
 
   .shell {
@@ -433,6 +459,14 @@ button:hover {
 
   .quickAdd > button {
     flex: 1 1 92px;
+  }
+
+  .columnControl {
+    flex: 1 1 100%;
+  }
+
+  .columnControl button {
+    flex: 1;
   }
 
   .dataPanel {
@@ -507,21 +541,19 @@ button:hover {
     min-width: 388px;
   }
 
-  .inventorySheet th,
-  .inventorySheet td {
-    width: 36px;
+.inventorySheet th,
+.inventorySheet td {
     height: 38px;
   }
 
   .inventorySheet .corner,
   .inventorySheet .rowHead {
-    width: 52px;
     padding-left: 6px;
   }
 
   .inventorySheet .actionHead,
   .inventorySheet .deleteCell {
-    width: 48px;
+    width: var(--delete-width);
   }
 
   .inventorySheet th,
