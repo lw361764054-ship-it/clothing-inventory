@@ -118,16 +118,16 @@ function normalizeInventoryData(data) {
       const matrixColors = Object.keys(style.matrix || {});
       const matrixSizes = Object.values(style.matrix || {})
         .flatMap(row => Object.keys(row || {}));
-      const sizes = uniqueList([
+      const styleSizes = [
         ...(Array.isArray(style.sizes) ? style.sizes : []),
-        ...matrixSizes,
-        ...(next.settings.sizes || [])
-      ]);
-      const colors = uniqueList([
+        ...matrixSizes
+      ];
+      const styleColors = [
         ...(Array.isArray(style.colors) ? style.colors : []),
-        ...matrixColors,
-        ...(next.settings.colors || [])
-      ]);
+        ...matrixColors
+      ];
+      const sizes = uniqueList(styleSizes.length ? styleSizes : (next.settings.sizes || []));
+      const colors = uniqueList(styleColors.length ? styleColors : ["黑色"]);
       style.sizes = sizes;
       style.colors = colors;
       style.matrix = style.matrix || {};
@@ -182,8 +182,8 @@ function styleSizes(style) {
 function styleColors(style) {
   const fromStyle = Array.isArray(style?.colors) ? style.colors : [];
   const fromMatrix = Object.keys(style?.matrix || {});
-  const fallback = fromStyle.length ? [] : (state.settings.colors || []);
-  return uniqueList([...fromStyle, ...fromMatrix, ...fallback]);
+  const colors = uniqueList([...fromStyle, ...fromMatrix]);
+  return colors.length ? colors : ["黑色"];
 }
 
 function uniqueList(values) {
