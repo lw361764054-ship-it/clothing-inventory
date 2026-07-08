@@ -192,7 +192,13 @@ function handleLocalRequest(url, options = {}) {
     style.matrix[body.color][body.size] = Math.max(0, Math.floor(Number(body.quantity || 0)));
   } else if (pathname === "/api/styles" && method === "POST") {
     if (!body.name?.trim()) throw new Error("请输入款名");
-    const style = { id: makeId("style"), name: body.name.trim(), matrix: {} };
+    const style = {
+      id: makeId("style"),
+      name: body.name.trim(),
+      colors: ["黑色"],
+      sizes: cloneData(state.settings.sizes || []),
+      matrix: {}
+    };
     ensureStyleMatrix(style);
     page.styles.push(style);
   } else if (pathname === "/api/style-colors" && method === "POST") {
